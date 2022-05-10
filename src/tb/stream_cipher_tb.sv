@@ -292,10 +292,10 @@ module stream_cipher_tb;
 
   reg [7:0] EXPECTED_GEN;
   reg [7:0] EXPECTED_CHECK;
-  reg [7:0] EXPECTED_QUEUE [$]; // Usage of $ to indicate unpacked dimension makes the array dynamic (similar to a C language dynamic array), that is called queue in SystemVerilog
+  reg [7:0] EXPECTED_QUEUE [$];
 
-  // Tasks are similar to C/C++ functions: they can or cannot return values/objects and can or cannot have inputs;
-  // in addition they can include time-based statements (e.g.: wait, posedge, negedge, ...)
+  // Routine to get the correct encrypted (or decrypted) output, given the
+  // current key and "offset" of the char to encyrpt (or decrypt)
   task expected_out(input byte i, output [7:0] exp_char);
     exp_char = ptxt_char ^ sbox[(key+i)%256];
   endtask
@@ -331,11 +331,11 @@ module stream_cipher_tb;
 
           if (dout_valid == 1'b1) begin
             EXPECTED_CHECK = EXPECTED_QUEUE.pop_front();
-            $display("%d -> %c %c %-5s", ctxt_char, EXPECTED_CHECK,
+            $display("%d: Got '%c', expected: '%c' (%-5s)", j, ctxt_char, EXPECTED_CHECK,
                      EXPECTED_CHECK === ctxt_char ? "OK" : "ERROR");
             if (EXPECTED_CHECK !== ctxt_char) $stop;
           end else begin
-            $display("Accipicchia");
+            $display("dout_valid not asserted. ERROR");
             $stop;
           end
         end
