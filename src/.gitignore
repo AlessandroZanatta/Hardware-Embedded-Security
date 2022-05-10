@@ -1,0 +1,7 @@
+quartus/db/
+quartus/proj_sbox_stream_cipher.qpf
+quartus/proj_sbox_stream_cipher.qsf
+modelsim/modelsim.ini
+modelsim/proj.mpf
+modelsim/transcript
+modelsim/work/
