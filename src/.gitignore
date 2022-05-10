@@ -5,3 +5,5 @@ modelsim/modelsim.ini
 modelsim/proj.mpf
 modelsim/transcript
 modelsim/work/
+modelsim/stream_cipher_tb.cr.mti
+modelsim/stream_cipher_tb.mpf

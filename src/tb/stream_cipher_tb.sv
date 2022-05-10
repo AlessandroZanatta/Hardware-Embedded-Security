@@ -17,10 +17,10 @@ module stream_cipher_tb;
   reg [7:0] key = 8'h00;
   reg [7:0] ptxt_char;
   wire [7:0] ctxt_char;
-  wire din_valid;
-  wire dout_valid;
+  reg din_valid;
+  reg dout_valid;
 
-  localparam [7:0] sbox[1:0] = {
+  localparam byte sbox[0:255] = {
     8'h63,
     8'h7c,
     8'h77,
@@ -280,7 +280,7 @@ module stream_cipher_tb;
   };
 
 
-  stream_cipher INSTANCE_NAME (
+  stream_cipher stream_cipher_instance (
       .clk       (clk),
       .rst_n     (rst_n),
       .key       (key),
@@ -296,10 +296,8 @@ module stream_cipher_tb;
 
   // Tasks are similar to C/C++ functions: they can or cannot return values/objects and can or cannot have inputs;
   // in addition they can include time-based statements (e.g.: wait, posedge, negedge, ...)
-  task expected_out(input int i, output [7:0] exp_char);
-
+  task expected_out(input byte i, output [7:0] exp_char);
     exp_char = ptxt_char ^ sbox[(key+i)%256];
-
   endtask
 
   initial begin
@@ -316,7 +314,7 @@ module stream_cipher_tb;
     fork  // -------------------------------------------------------------------
 
       begin : STIMULI_1R
-        for (int i = 0; i < 256; i++) begin
+        for (byte i = 0; i < 256; i++) begin
           ptxt_char = i;
           din_valid = 1'b1;
           @(posedge clk);
@@ -333,7 +331,7 @@ module stream_cipher_tb;
 
           if (dout_valid == 1'b1) begin
             EXPECTED_CHECK = EXPECTED_QUEUE.pop_front();
-            $display("%c %c %-5s", ctxt_char, EXPECTED_CHECK,
+            $display("%d -> %c %c %-5s", ctxt_char, EXPECTED_CHECK,
                      EXPECTED_CHECK === ctxt_char ? "OK" : "ERROR");
             if (EXPECTED_CHECK !== ctxt_char) $stop;
           end else begin
