@@ -1,24 +1,28 @@
-// -----------------------------------------------------------------------------
-// ---- Testbench of Caesar's cipher module for debug and corner cases check
-// -----------------------------------------------------------------------------
 module stream_cipher_tb;
 
+  // Clock definition (period: 10 time units)
   reg clk = 1'b0;
   always #5 clk = !clk;
 
-  reg rst_n = 1'b0;
-  event reset_deassertion; // event(s), when asserted, can be used as time trigger(s) to synchronize with: e.g. refer to lines and 14 and 81
+  // Reset definition (negative edge triggered)
+  reg rst_n = 1'b1;
 
-  initial begin
-    #11 rst_n = 1'b1;
-    ->reset_deassertion;  // trigger event named 'reset_deassertion'
-  end
-
-  reg [7:0] key = 8'h00;
+  reg [7:0] key;
   reg [7:0] ptxt_char;
   wire [7:0] ctxt_char;
   reg din_valid;
-  reg dout_valid;
+  wire dout_valid;
+
+  // Instance of our stream cipher
+  stream_cipher stream_cipher_instance (
+      .clk       (clk),
+      .rst_n     (rst_n),
+      .key       (key),
+      .ptxt_char (ptxt_char),
+      .ctxt_char (ctxt_char),
+      .din_valid (din_valid),
+      .dout_valid(dout_valid)
+  );
 
   localparam byte sbox[0:255] = {
     8'h63,
@@ -279,90 +283,61 @@ module stream_cipher_tb;
     8'h16
   };
 
-
-  stream_cipher stream_cipher_instance (
-      .clk       (clk),
-      .rst_n     (rst_n),
-      .key       (key),
-      .ptxt_char (ptxt_char),
-      .ctxt_char (ctxt_char),
-      .din_valid (din_valid),
-      .dout_valid(dout_valid)
-  );
-
-  reg [7:0] EXPECTED_GEN;
-  reg [7:0] EXPECTED_CHECK;
-  reg [7:0] EXPECTED_QUEUE [$];
-
   // Routine to get the correct encrypted (or decrypted) output, given the
   // current key and "offset" of the char to encyrpt (or decrypt)
   task expected_out(input byte i, output [7:0] exp_char);
     exp_char = ptxt_char ^ sbox[(key+i)%256];
   endtask
 
+  // The key is sampled when the circuit is reset, therefore we:
+  // - set the key
+  // - trigger a reset
+  task set_key(input byte k);
+    key   = k;
+    rst_n = 1'b0;
+    #1 rst_n = 1'b1;
+  endtask
+
   initial begin
-    // ------------------------------------------------------------------
-    @(reset_deassertion);  // Hook reset deassertion (event)
-    // ------------------------------------------------------------------
-    // Alternative: 
-    // do not create event reset_deassertion, keep rst_n with same behaviour, and here replace with...
-    // @(posedge rst_n);
-    // ------------------------------------------------------------------
-
-    @(posedge clk);  // Hook next rising edge of signal clk (used as clock)
 
     fork
-      begin
-        for (int i = 0; i < 256; i++) begin
-          ptxt_char = i;
-          din_valid = 1'b1;
-          @(posedge clk);
-          expected_out(i, EXPECTED_GEN);
-          EXPECTED_QUEUE.push_back(EXPECTED_GEN);
-          din_valid = 1'b0;
-        end
-      end
-
-      begin
-        @(posedge clk);
-        for (int j = 0; j < 256; j++) begin
-          @(posedge clk);
-
-          if (dout_valid == 1'b1) begin
-            EXPECTED_CHECK = EXPECTED_QUEUE.pop_front();
-            $display("%d: Got '%c', expected: '%c' (%-5s)", j, ctxt_char, EXPECTED_CHECK,
-                     EXPECTED_CHECK === ctxt_char ? "OK" : "ERROR");
-            if (EXPECTED_CHECK !== ctxt_char) $stop;
-          end else begin
-            $display("dout_valid not asserted. ERROR");
-            $stop;
-          end
-        end
-      end
-
-    join
-    fork
+      reg [7:0] EXPECTED_GEN;
+      reg [7:0] EXPECTED_CHECK;
+      reg [7:0] EXPECTED_QUEUE [$];
 
       // Try encrypting every possible character with every possible key
       // This is doable, as the space is pretty small (256 characters * 256
       // keys)
       begin
+        // Set the initial key
+        set_key(8'h00);
+
+        // Loop 256*256 times to test all chars with all keys to achieve
+        // 100% coverage of the encryption/decryption.
         for (int b = 0; b < 256 * 256; b++) begin
 
-          ptxt_char = b;
+          // Set inputs and wait for their sampling by the next posedge of clk
+          ptxt_char = byte'(b);
           din_valid = 1'b1;
           @(posedge clk);
-          expected_out(b, EXPECTED_GEN);
+
+          // Save expected result into the vector
+          expected_out(byte'(b), EXPECTED_GEN);
           EXPECTED_QUEUE.push_back(EXPECTED_GEN);
-          din_valid = 1'b0;
         end
       end
 
       begin
+        // Wait a cycle (outputs are available at the start of the next cycle)
         @(posedge clk);
+
+        // Loop to check actual outputs
         for (int j = 0; j < 256 * 256; j++) begin
+          // Wait for outputs to be available
           @(posedge clk);
 
+          // If dout_valid is asserted, check if the output is equal to the
+          // expected one
           if (dout_valid == 1'b1) begin
             EXPECTED_CHECK = EXPECTED_QUEUE.pop_front();
             $display("%d: Got '%c', expected: '%c' (%-5s)", j, ctxt_char, EXPECTED_CHECK,
@@ -378,27 +353,39 @@ module stream_cipher_tb;
     join
     fork
       begin
-        string char;
+        string char, p, d;
         int PLAINTEXT_FP;
+        int DEC_PLAINTEXT_FP;
         int CIPHERTEXT_FP;
         byte CIPHERTEXT[$];
         byte PLAINTEXT[$];
 
-        // Encrypt it
-        PLAINTEXT_FP = $fopen("tv/plaintext.txt", "r");
-        $write("Encrypting file `tv/plaintext.txt`");
+        localparam my_key = 8'h41;
 
-        key   = 8'h00;
-        rst_n = 0;
-        #1 rst_n = 1;
+        // -------------- //
+        // Encrypt a file //
+        // -------------- //
+        PLAINTEXT_FP = $fopen("tv/plaintext.txt", "r");
+        $write("Encrypting file `tv/plaintext.txt`... ");
+
+        // Set the encryption key
+        set_key(my_key);
         while ($fscanf(
             PLAINTEXT_FP, "%c", char
         ) == 1) begin
+
+          // Set the ptxt_char and assert din_valid
           ptxt_char = byte'(char);
           din_valid = 1'b1;
-          @(posedge clk);
+          @(posedge clk);  // Wait for inputs sampling 
+
+          // Here we are wasting a clock cycle in which we could encrypt
+          // a char, therefore we deassert din_valid
           din_valid = 1'b0;
-          @(posedge clk);
+          @(posedge clk);  // Wait for output to be available
+
+          // Check that the output is indeed available and push it into the
+          // ciphertext vector
           if (dout_valid == 1'b1) begin
             CIPHERTEXT.push_back(ctxt_char);
           end else begin
@@ -408,18 +395,20 @@ module stream_cipher_tb;
         end
         $fclose(PLAINTEXT_FP);
 
+        // Write ciphertext to file
         CIPHERTEXT_FP = $fopen("tv/ciphertext.txt", "w");
         foreach (CIPHERTEXT[i]) $fwrite(CIPHERTEXT_FP, "%c", CIPHERTEXT[i]);
         $fclose(CIPHERTEXT_FP);
-        $write("Encrypted!");
+        $write("Encrypted!\n");
 
-        // Decrypt it
+        // ---------------- //
+        // Decrypt the file //
+        // ---------------- //
         CIPHERTEXT_FP = $fopen("tv/ciphertext.txt", "r");
-        $write("Decrypting file `tv/ciphertext.txt`");
+        $write("Decrypting file `tv/ciphertext.txt`... ");
 
-        key   = 8'h00;
-        rst_n = 0;
-        #1 rst_n = 1;
+        // Set decryption key
+        set_key(my_key);
         while ($fscanf(
             CIPHERTEXT_FP, "%c", char
         ) == 1) begin
@@ -437,10 +426,42 @@ module stream_cipher_tb;
         end
         $fclose(CIPHERTEXT_FP);
 
+        // Write plaintext to file
         PLAINTEXT_FP = $fopen("tv/decrypted_plaintext.txt", "w");
         foreach (PLAINTEXT[i]) $fwrite(PLAINTEXT_FP, "%c", PLAINTEXT[i]);
         $fclose(PLAINTEXT_FP);
-        $write("Decrypted!");
+        $write("Decrypted!\n");
+
+        // ----------------------------------------------------------- //
+        // Check that the plaintext and the decrypted ciphertext match //
+        // ----------------------------------------------------------- //
+        $write("Checking result... ");
+
+        // Open files and check that each char matches
+        PLAINTEXT_FP = $fopen("tv/plaintext.txt", "r");
+        DEC_PLAINTEXT_FP = $fopen("tv/decrypted_plaintext.txt", "r");
+
+        while (!$feof(
+            PLAINTEXT_FP
+        ) && !$feof(
+            DEC_PLAINTEXT_FP
+        )) begin
+
+          // As both files passed the feof check, they will return always
+          // return a single char
+          void'($fscanf(PLAINTEXT_FP, "%c", p));
+          void'($fscanf(DEC_PLAINTEXT_FP, "%c", d));
+
+          // If any char is mismatched, we failed
+          if (p != d) begin
+            $write("FAILED! RESULT MISMATCH!");
+            $stop;
+          end
+        end
+
+        $fclose(PLAINTEXT_FP);
+        $fclose(DEC_PLAINTEXT_FP);
+        $write("OK! D(E(x, k), k) = x!\n");
       end
     join
     $stop;

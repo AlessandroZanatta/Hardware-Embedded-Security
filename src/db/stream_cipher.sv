@@ -18,6 +18,7 @@ module stream_cipher (
   // S-box lookup of the counter block
   wire [7:0] scb;
 
+  // Wire used to assign in continuous assignment the result
   wire [7:0] ctxt_char_wire;
 
   // sbox module instantiation
@@ -31,6 +32,7 @@ module stream_cipher (
   // Logic Design
   // ---------------------------------------------------------------------------
 
+  // 
   assign ctxt_char_wire = ptxt_char ^ scb;
 
   // Output char (ciphertext)
@@ -46,7 +48,10 @@ module stream_cipher (
       //
       // Might or might not be the correct/best/more efficient choice.
       cb <= cb == 255 ? 0 : (cb + 8'h01);
+
+      // Assert dout_valid to inform a new character has been encrypted
       dout_valid <= 1'b1;
+      // Set the encrypted character
       ctxt_char <= ctxt_char_wire;
     end else begin
       dout_valid <= 1'b0;
