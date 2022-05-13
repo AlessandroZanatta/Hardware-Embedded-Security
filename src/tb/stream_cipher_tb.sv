@@ -10,7 +10,7 @@ module stream_cipher_tb;
   event reset_deassertion; // event(s), when asserted, can be used as time trigger(s) to synchronize with: e.g. refer to lines and 14 and 81
 
   initial begin
-    #12.8 rst_n = 1'b1;
+    #11 rst_n = 1'b1;
     ->reset_deassertion;  // trigger event named 'reset_deassertion'
   end
 

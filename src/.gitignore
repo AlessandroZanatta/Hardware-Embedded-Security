@@ -7,3 +7,4 @@ modelsim/transcript
 modelsim/work/
 modelsim/stream_cipher_tb.cr.mti
 modelsim/stream_cipher_tb.mpf
+modelsim/vsim.wlf
