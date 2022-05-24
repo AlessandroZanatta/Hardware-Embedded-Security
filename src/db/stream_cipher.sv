@@ -15,7 +15,6 @@ module stream_cipher (
 
   // Counter block
   reg  [7:0] cb;
-  wire [7:0] next_cb;
 
   // S-box lookup of the counter block
   wire [7:0] scb;
@@ -35,7 +34,6 @@ module stream_cipher (
   // ---------------------------------------------------------------------------
 
   assign ctxt_char_wire = ptxt_char ^ scb;
-  assign next_cb = cb == 8'hff ? 8'h00 : (cb + 8'h01);
 
   // Output char (ciphertext)
   always @(posedge clk or negedge rst_n)
@@ -51,7 +49,7 @@ module stream_cipher (
         // and also avoids having to declare [cb] as a 9-bit vector.
         //
         // Might or might not be the correct/best/more efficient choice.
-        cb <= next_cb;
+        cb <= cb == 8'hff ? 8'h00 : (cb + 8'h01);
 
         // Assert dout_valid to inform a new character has been encrypted
         dout_valid <= 1'b1;
