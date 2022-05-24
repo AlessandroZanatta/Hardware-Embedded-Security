@@ -8,3 +8,9 @@ modelsim/work/
 modelsim/stream_cipher_tb.cr.mti
 modelsim/stream_cipher_tb.mpf
 modelsim/vsim.wlf
+
+quartus/incremental_db
+quartus/output_files
+quartus/proj_stream_cipher.qpf
+quartus/proj_stream_cipher.qsf
+quartus/proj_stream_cipher_assignment_defaults.qdf

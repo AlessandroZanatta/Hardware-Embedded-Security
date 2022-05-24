@@ -7,6 +7,7 @@ module stream_cipher_tb;
   // Reset definition (negative edge triggered)
   reg rst_n = 1'b1;
 
+  reg key_in;
   reg [7:0] key;
   reg [7:0] ptxt_char;
   wire [7:0] ctxt_char;
@@ -17,6 +18,7 @@ module stream_cipher_tb;
   stream_cipher stream_cipher_instance (
       .clk       (clk),
       .rst_n     (rst_n),
+      .key_in    (key_in),
       .key       (key),
       .ptxt_char (ptxt_char),
       .ctxt_char (ctxt_char),
@@ -293,9 +295,10 @@ module stream_cipher_tb;
   // - set the key
   // - trigger a reset
   task set_key(input byte k);
-    key   = k;
-    rst_n = 1'b0;
-    #1 rst_n = 1'b1;
+    key = k;
+    key_in = 1'b1;
+    @(posedge clk);
+    key_in = 1'b0;
   endtask
 
   initial begin
@@ -325,10 +328,12 @@ module stream_cipher_tb;
           expected_out(byte'(b), EXPECTED_GEN);
           EXPECTED_QUEUE.push_back(EXPECTED_GEN);
         end
+        din_valid = 1'b0;
       end
 
       begin
         // Wait a cycle (outputs are available at the start of the next cycle)
+        @(posedge clk);
         @(posedge clk);
 
         // Loop to check actual outputs
@@ -380,7 +385,7 @@ module stream_cipher_tb;
           @(posedge clk);  // Wait for inputs sampling 
 
           // Here we are wasting a clock cycle in which we could encrypt
-          // a char, therefore we deassert din_valid
+          // a char, therefore we de-assert din_valid
           din_valid = 1'b0;
           @(posedge clk);  // Wait for output to be available
 
