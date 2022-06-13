@@ -2,10 +2,10 @@ module stream_cipher (
     input            clk,
     input            rst_n,
     input      [7:0] key,
-    input      [7:0] ptxt_char,
+    input      [7:0] din,
     input  reg       key_in,
     input  reg       din_valid,
-    output reg [7:0] ctxt_char,
+    output reg [7:0] dout,
     output reg       dout_valid
 );
 
@@ -20,7 +20,7 @@ module stream_cipher (
   wire [7:0] scb;
 
   // Wire used to assign in continuous assignment the result
-  wire [7:0] ctxt_char_wire;
+  wire [7:0] dout_wire;
 
   // sbox module instantiation
   sbox sbox (
@@ -33,12 +33,13 @@ module stream_cipher (
   // Logic Design
   // ---------------------------------------------------------------------------
 
-  assign ctxt_char_wire = ptxt_char ^ scb;
+  assign dout_wire = din ^ scb;
 
   // Output char (ciphertext)
   always @(posedge clk or negedge rst_n)
     if (!rst_n) begin
       dout_valid <= 1'b0;
+      cb <= 8'h00;
     end else begin
       if (key_in) begin
         cb <= key;
@@ -54,7 +55,7 @@ module stream_cipher (
         // Assert dout_valid to inform a new character has been encrypted
         dout_valid <= 1'b1;
         // Set the encrypted character
-        ctxt_char <= ctxt_char_wire;
+        dout <= dout_wire;
       end else begin
         dout_valid <= 1'b0;
       end

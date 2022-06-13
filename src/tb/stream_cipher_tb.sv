@@ -9,8 +9,8 @@ module stream_cipher_tb;
 
   reg key_in;
   reg [7:0] key;
-  reg [7:0] ptxt_char;
-  wire [7:0] ctxt_char;
+  reg [7:0] din;
+  wire [7:0] dout;
   reg din_valid;
   wire dout_valid;
 
@@ -20,8 +20,8 @@ module stream_cipher_tb;
       .rst_n     (rst_n),
       .key_in    (key_in),
       .key       (key),
-      .ptxt_char (ptxt_char),
-      .ctxt_char (ctxt_char),
+      .din       (din),
+      .dout      (dout),
       .din_valid (din_valid),
       .dout_valid(dout_valid)
   );
@@ -288,7 +288,7 @@ module stream_cipher_tb;
   // Routine to get the correct encrypted (or decrypted) output, given the
   // current key and "offset" of the char to encyrpt (or decrypt)
   task expected_out(input byte i, output [7:0] exp_char);
-    exp_char = ptxt_char ^ sbox[(key+i)%256];
+    exp_char = din ^ sbox[(key+i)%256];
   endtask
 
   // The key is sampled when the circuit is reset, therefore we:
@@ -320,7 +320,7 @@ module stream_cipher_tb;
         for (int b = 0; b < 256 * 256; b++) begin
 
           // Set inputs and wait for their sampling by the next posedge of clk
-          ptxt_char = byte'(b);
+          din = byte'(b);
           din_valid = 1'b1;
           @(posedge clk);
 
@@ -345,9 +345,9 @@ module stream_cipher_tb;
           // expected one
           if (dout_valid == 1'b1) begin
             EXPECTED_CHECK = EXPECTED_QUEUE.pop_front();
-            $display("%d: Got '%c', expected: '%c' (%-5s)", j, ctxt_char, EXPECTED_CHECK,
-                     EXPECTED_CHECK === ctxt_char ? "OK" : "ERROR");
-            if (EXPECTED_CHECK !== ctxt_char) $stop;
+            $display("%d: Got '%c', expected: '%c' (%-5s)", j, dout, EXPECTED_CHECK,
+                     EXPECTED_CHECK === dout ? "OK" : "ERROR");
+            if (EXPECTED_CHECK !== dout) $stop;
           end else begin
             $display("dout_valid not asserted. ERROR");
             $stop;
@@ -379,8 +379,8 @@ module stream_cipher_tb;
             PLAINTEXT_FP, "%c", char
         ) == 1) begin
 
-          // Set the ptxt_char and assert din_valid
-          ptxt_char = byte'(char);
+          // Set the din and assert din_valid
+          din = byte'(char);
           din_valid = 1'b1;
           @(posedge clk);  // Wait for inputs sampling 
 
@@ -392,7 +392,7 @@ module stream_cipher_tb;
           // Check that the output is indeed available and push it into the
           // ciphertext vector
           if (dout_valid == 1'b1) begin
-            CIPHERTEXT.push_back(ctxt_char);
+            CIPHERTEXT.push_back(dout);
           end else begin
             $display("dout_valid not asserted. ERROR");
             $stop;
@@ -417,13 +417,13 @@ module stream_cipher_tb;
         while ($fscanf(
             CIPHERTEXT_FP, "%c", char
         ) == 1) begin
-          ptxt_char = byte'(char);
+          din = byte'(char);
           din_valid = 1'b1;
           @(posedge clk);
           din_valid = 1'b0;
           @(posedge clk);
           if (dout_valid == 1'b1) begin
-            PLAINTEXT.push_back(ctxt_char);
+            PLAINTEXT.push_back(dout);
           end else begin
             $display("dout_valid not asserted. ERROR");
             $stop;
@@ -466,7 +466,7 @@ module stream_cipher_tb;
 
         $fclose(PLAINTEXT_FP);
         $fclose(DEC_PLAINTEXT_FP);
-        $write("OK! D(E(x, k), k) = x!\n");
+        $write("OK\n");
       end
     join
     $stop;

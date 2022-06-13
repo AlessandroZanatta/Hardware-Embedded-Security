@@ -1,0 +1,58 @@
+\documentclass[a4paper,11pt]{article}
+
+%% Packages 
+\usepackage[T1]{fontenc}
+\usepackage[pdftex]{hyperref}
+\usepackage{graphicx}               % Images
+\usepackage{titletoc}               % Table of contents
+\usepackage{authblk}                % Authors affiliations
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{cleveref}               % Better references
+\usepackage{subcaption}             % Subfigures
+\usepackage{enumitem}               % Enumerates and itemizes control
+\usepackage{fancyhdr}
+
+
+%% No spaces between items in a list
+\setlist{noitemsep}
+
+\newtheorem{theorem}{Theorem}
+
+%% Table of contents formatting
+\dottedcontents{section}[25pt]{\addvspace{3pt}}{2.3em}{9.5pt}
+\dottedcontents{subsection}[50pt]{\addvspace{3pt}}{3.2em}{9.5pt}
+\setcounter{tocdepth}{3} % ToC max depth
+
+%% Add ./images to images path
+\graphicspath{{./images/}, {./logos/}}
+\newcommand{\email}[1]{\href{mailto:#1}{\footnotesize\texttt{#1}}} % Email
+
+%% Title, author, university, course and year
+\def\thetitle{Project documentation}
+\author[a]{Alessandro Zanatta} \affil[a]{no. 647047 -- \email{a.zanatta1@studenti.unipi.it}}
+\author[b]{Gianmarco Pastore} \affil[b]{no. 646236 -- \email{g.pastore11@studenti.unipi.it}}
+\renewcommand\Affilfont{\small}
+\def\uni{University\\of Pisa} % University name
+\def\course{Hardware and\\Embedded Security} % Course name
+\def\ay{2021/22} % Academic year
+
+%% Start of document
+\begin{document}
+
+\pagenumbering{gobble}
+\input{titlesec}
+\tableofcontents
+\clearpage
+
+%% Add sections here by including them from the sections directory
+\pagenumbering{arabic}
+\input{./sections/00_project_specification}\clearpage
+\input{./sections/01_block_diagram_design_choices}\clearpage
+\input{./sections/02_waveforms}\clearpage
+\input{./sections/03_tests}\clearpage
+\input{./sections/04_RTL}\clearpage
+\input{./sections/05_sta}
+
+\end{document}
