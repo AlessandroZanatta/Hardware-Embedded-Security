@@ -5,7 +5,10 @@ module stream_cipher_tb;
   always #5 clk = !clk;
 
   // Reset definition (negative edge triggered)
-  reg rst_n = 1'b1;
+  reg rst_n = 1'b0;
+  initial begin
+    #5 rst_n = 1'b1;
+  end
 
   reg key_in;
   reg [7:0] key;
@@ -291,9 +294,11 @@ module stream_cipher_tb;
     exp_char = din ^ sbox[(key+i)%256];
   endtask
 
-  // The key is sampled when the circuit is reset, therefore we:
+  // The key is sampled when the key_in signal is high, therefore we:
   // - set the key
-  // - trigger a reset
+  // - assert key_in
+  // - wait for a posedge
+  // - deassert key_in
   task set_key(input byte k);
     key = k;
     key_in = 1'b1;
@@ -302,6 +307,7 @@ module stream_cipher_tb;
   endtask
 
   initial begin
+    @(posedge rst_n)
 
     fork
       reg [7:0] EXPECTED_GEN;

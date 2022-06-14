@@ -19,9 +19,6 @@ module stream_cipher (
   // S-box lookup of the counter block
   wire [7:0] scb;
 
-  // Wire used to assign in continuous assignment the result
-  wire [7:0] dout_wire;
-
   // sbox module instantiation
   sbox sbox (
       .in (cb),
@@ -32,8 +29,6 @@ module stream_cipher (
   // ---------------------------------------------------------------------------
   // Logic Design
   // ---------------------------------------------------------------------------
-
-  assign dout_wire = din ^ scb;
 
   // Output char (ciphertext)
   always @(posedge clk or negedge rst_n)
@@ -55,7 +50,7 @@ module stream_cipher (
         // Assert dout_valid to inform a new character has been encrypted
         dout_valid <= 1'b1;
         // Set the encrypted character
-        dout <= dout_wire;
+        dout <= din ^ scb;
       end else begin
         dout_valid <= 1'b0;
       end

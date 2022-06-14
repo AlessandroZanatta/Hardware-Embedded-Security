@@ -3,7 +3,7 @@ module sbox (
     output wire [7:0] out
 );
 
-  wire [7:0] sbox[0:255];
+  wire [0:255][7:0] sbox;
 
   // Assign the output as the sbox lookup of the input
   assign out = sbox[in];
