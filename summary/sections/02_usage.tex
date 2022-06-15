@@ -1,0 +1,10 @@
+\section{Usage}
+\label{sec:usage}
+In this section, we will briefly describe how the module, when integrated, has to be used in order for it to work correctly.
+
+At startup, the module shall be reset. Note that the reset signal is negedge triggered. The counter block \lstinline{cb} and the \lstinline{dout_valid} signals are set to zero.
+Beware that the internal counter block is the key used by the module, therefore it is strongly recommended to set the key before encryption.
+
+To set the key, the \lstinline{key} signal must contain the key and must be stable, and the \lstinline{key_in} signal must be asserted. Other signals are ignored. At least a clock cycle must be waited to allow for the key to be set correctly.
+
+To encrypt (decrypt), the plaintext (ciphertext) must be provided byte per byte. In particular, the byte to encrypt (decrypt) must be fed through the \lstinline{din} signal, and the \lstinline{din_valid} signal must be asserted. The encryption (decryption) takes a single clock cycle per byte. The encryption (decryption) output \lstinline{dout} is to be considered valid only when \lstinline{dout_valid} is asserted. Each clock cycle an encryption (decryption) can be carried out.

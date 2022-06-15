@@ -3,6 +3,7 @@
 %% Packages 
 \usepackage[T1]{fontenc}
 \usepackage[pdftex]{hyperref}
+\usepackage{geometry}
 \usepackage{graphicx}               % Images
 \usepackage{titletoc}               % Table of contents
 \usepackage{authblk}                % Authors affiliations
@@ -13,7 +14,45 @@
 \usepackage{subcaption}             % Subfigures
 \usepackage{enumitem}               % Enumerates and itemizes control
 \usepackage{fancyhdr}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{circuitikz}
+\usepackage{nth}
 
+\definecolor{vgreen}{RGB}{104,180,104}
+\definecolor{vblue}{RGB}{49,49,255}
+\definecolor{vorange}{RGB}{255,143,132}
+
+\lstdefinestyle{verilog-style}
+{
+    language=Verilog,
+    basicstyle=\small\ttfamily,
+    keywordstyle=\color{vblue},
+    identifierstyle=\color{black},
+    commentstyle=\color{vgreen},
+    % numbers=left,
+    % numberstyle=\tiny\color{black},
+    numbersep=10pt,
+    tabsize=8,
+    moredelim=*[s][\colorIndex]{[}{]},
+    literate=*{:}{:}1
+}
+
+\makeatletter
+\newcommand*\@lbracket{[}
+\newcommand*\@rbracket{]}
+\newcommand*\@colon{:}
+\newcommand*\colorIndex{%
+    \edef\@temp{\the\lst@token}%
+    \ifx\@temp\@lbracket \color{black}%
+    \else\ifx\@temp\@rbracket \color{black}%
+    \else\ifx\@temp\@colon \color{black}%
+    \else \color{vorange}%
+    \fi\fi\fi
+}
+\makeatother
+
+\lstset{style={verilog-style}}
 
 %% No spaces between items in a list
 \setlist{noitemsep}
@@ -50,9 +89,9 @@
 \pagenumbering{arabic}
 \input{./sections/00_project_specification}\clearpage
 \input{./sections/01_block_diagram_design_choices}\clearpage
-\input{./sections/02_waveforms}\clearpage
+\input{./sections/02_usage}
 \input{./sections/03_tests}\clearpage
-\input{./sections/04_RTL}\clearpage
+\input{./sections/04_waveforms}\clearpage
 \input{./sections/05_sta}
 
 \end{document}

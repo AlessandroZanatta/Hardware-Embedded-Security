@@ -7,7 +7,7 @@ module stream_cipher_tb;
   // Reset definition (negative edge triggered)
   reg rst_n = 1'b0;
   initial begin
-    #5 rst_n = 1'b1;
+    #3 rst_n = 1'b1;
   end
 
   reg key_in;
@@ -307,6 +307,7 @@ module stream_cipher_tb;
   endtask
 
   initial begin
+    // Wait for rst_n to be deasserted
     @(posedge rst_n)
 
     fork
@@ -318,45 +319,122 @@ module stream_cipher_tb;
       // This is doable, as the space is pretty small (256 characters * 256
       // keys)
       begin
-        // Set the initial key
-        set_key(8'h00);
-
         // Loop 256*256 times to test all chars with all keys to achieve
         // 100% coverage of the encryption/decryption.
-        for (int b = 0; b < 256 * 256; b++) begin
+        for (int k = 0; k < 256; k++) begin
+          set_key(k[7:0]);
+          for (int b = 0; b < 256; b++) begin
 
-          // Set inputs and wait for their sampling by the next posedge of clk
-          din = byte'(b);
-          din_valid = 1'b1;
-          @(posedge clk);
+            // Set inputs and wait for their sampling by the next posedge of clk
+            din = byte'(b);
+            din_valid = 1'b1;
+            @(posedge clk);
+            din_valid = 1'b0;
 
-          // Save expected result into the vector
-          expected_out(byte'(b), EXPECTED_GEN);
-          EXPECTED_QUEUE.push_back(EXPECTED_GEN);
+            // Save expected result into the vector
+            expected_out(byte'(b), EXPECTED_GEN);
+            EXPECTED_QUEUE.push_back(EXPECTED_GEN);
+          end
+          din_valid = 1'b0;
         end
-        din_valid = 1'b0;
       end
 
       begin
         // Wait a cycle (outputs are available at the start of the next cycle)
         @(posedge clk);
-        @(posedge clk);
 
         // Loop to check actual outputs
-        for (int j = 0; j < 256 * 256; j++) begin
-          // Wait for outputs to be available
+        for (int k = 0; k < 256; k++) begin
+          // Wait for the key to be set
           @(posedge clk);
+          for (int j = 0; j < 256; j++) begin
+            // Wait for outputs to be available
+            @(posedge clk);
 
-          // If dout_valid is asserted, check if the output is equal to the
-          // expected one
-          if (dout_valid == 1'b1) begin
-            EXPECTED_CHECK = EXPECTED_QUEUE.pop_front();
-            $display("%d: Got '%c', expected: '%c' (%-5s)", j, dout, EXPECTED_CHECK,
-                     EXPECTED_CHECK === dout ? "OK" : "ERROR");
-            if (EXPECTED_CHECK !== dout) $stop;
-          end else begin
-            $display("dout_valid not asserted. ERROR");
-            $stop;
+            // If dout_valid is asserted, check if the output is equal to the
+            // expected one
+            if (dout_valid == 1'b1) begin
+              EXPECTED_CHECK = EXPECTED_QUEUE.pop_front();
+              $display("[Coverage] %d: Got '%c', expected: '%c' (%-5s)", k * 256 + j, dout,
+                       EXPECTED_CHECK, EXPECTED_CHECK === dout ? "OK" : "ERROR");
+              if (EXPECTED_CHECK !== dout) $stop;
+            end else begin
+              $display("dout_valid not asserted. ERROR");
+              $stop;
+            end
+          end
+        end
+      end
+    join
+
+    fork
+      reg [7:0] EXPECTED_GEN;
+      reg [7:0] EXPECTED_CHECK;
+      reg [7:0] EXPECTED_QUEUE [$];
+
+      // Try encrypting every possible character with every possible key
+      // Now, however, we encrypt a char after a (pseudo) random number of
+      // clock cycles
+      begin
+
+        // Set seed of PRNG
+        void'($urandom(0));
+
+        // Loop 256*256 times to test all chars with all keys
+        for (int k = 0; k < 256; k++) begin
+          set_key(k[7:0]);
+          for (int b = 0; b < 256; b++) begin
+
+            // Wait a random number of clock cycles before encrypting
+            for (int r = 0; r < $urandom_range(0, 5); r++) begin
+              @(posedge clk);
+            end
+
+            // Set inputs and wait for their sampling by the next posedge of clk
+            din = byte'(b);
+            din_valid = 1'b1;
+            @(posedge clk);
+            din_valid = 1'b0;
+
+            // Save expected result into the vector
+            expected_out(byte'(b), EXPECTED_GEN);
+            EXPECTED_QUEUE.push_back(EXPECTED_GEN);
+          end
+        end
+      end
+
+      begin
+        // Wait a cycle (outputs are available at the start of the next cycle)
+        @(posedge clk);
+
+        // Set seed of PRNG
+        void'($urandom(0));
+
+        // Loop to check actual outputs
+        for (int k = 0; k < 256; k++) begin
+          @(posedge clk);
+          for (int j = 0; j < 256; j++) begin
+
+            // Wait a random number of clock cycles before encrypting (the same
+            // as the above begin block)
+            for (int r = 0; r < $urandom_range(0, 5); r++) begin
+              @(posedge clk);
+            end
+
+            // Wait for outputs to be available
+            @(posedge clk);
+
+            // If dout_valid is asserted, check if the output is equal to the
+            // expected one
+            if (dout_valid == 1'b1) begin
+              EXPECTED_CHECK = EXPECTED_QUEUE.pop_front();
+              $display("[Random] %d: Got '%c', expected: '%c' (%-5s)", k * 256 + j, dout,
+                       EXPECTED_CHECK, EXPECTED_CHECK === dout ? "OK" : "ERROR");
+              if (EXPECTED_CHECK !== dout) $stop;
+            end else begin
+              $display("dout_valid not asserted. ERROR");
+              $stop;
+            end
           end
         end
       end

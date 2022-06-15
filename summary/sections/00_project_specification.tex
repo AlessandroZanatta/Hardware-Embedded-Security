@@ -25,6 +25,7 @@ The decryption is performed in the same way of the encryption, where the plainte
 The proof is very simple and it is based on the associative and self-inverse XOR properties.
 
 \begin{theorem}
+    \label{thm:enc_inv_dec}
     Let $ct[i]$ be the result of the encryption of $pt[i]$ as in \cref{eqn:enc} with key $K$, then the result of the decryption of $ct[i]$ with key $K$ as in \cref{eqn:dec} is equal to $pt[i]$.
 \end{theorem}
 

@@ -35,17 +35,21 @@ module stream_cipher (
     if (!rst_n) begin
       dout_valid <= 1'b0;
       cb <= 8'h00;
+
+      // Per specifications, dout is not valid unless dout_valid is asserted
+      // As resetting this would cause a loss in performance, we decided to
+      // not set this reg on reset.
+      // dout <= 8'h00;
     end else begin
       if (key_in) begin
         cb <= key;
+        dout_valid <= 1'b0;
       end else if (din_valid) begin
-        // Perform modulo operation by checking if [cb] is 255 or not.
-        // If it is, the result is zero, otherwise it is [cb] + 1
-        // This avoids having to implicitly take the modulo by overflowing [cb],
-        // and also avoids having to declare [cb] as a 9-bit vector.
-        //
-        // Might or might not be the correct/best/more efficient choice.
-        cb <= cb == 8'hff ? 8'h00 : (cb + 8'h01);
+        // Perform modulo operation by adding one.
+        // When cb is 255, the modulo is taken implicitly by overflow.
+        // This results in a performance improvement (without generating any
+        // warning).
+        cb <= cb + 8'h01;
 
         // Assert dout_valid to inform a new character has been encrypted
         dout_valid <= 1'b1;
