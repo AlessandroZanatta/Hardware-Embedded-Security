@@ -23,14 +23,14 @@ assign out = sbox[in];
 
 \subsection{Key management}
 
-To keep the key correctly stored inside the module, we use an internal counter block (\lstinline{cb}), which is defined as an 8-bit reg.
+To keep the key correctly stored inside the module, we use an internal counter block (\lstinline{cb}), which is defined as an 8-bit \lstinline{reg}.
 
 On reset, the counter block is set to zero as a default value. An additional 1-bit input signal (\lstinline{key_in}) has been added to allow to set the key. To correctly set the key, the \lstinline{key} signal must contain the key and must be stable, and the \lstinline{key_in} signal must be asserted. When these conditions are met, the key will be saved into the internal counter block \lstinline{cb} at the next rising edge of the clock. Moreover, there will be no output the next clock cycle, therefore we also deassert the \lstinline{dout_valid} signal.
 
-\subsection{Hardware logic}
-When the 1-bit \lstinline{din_valid} signal is asserted, the 8-bit input signal \lstinline{din} must to be valid and stable. The \lstinline{din} signal value is XORed with the result of the lookup in the S-box of the counter block \lstinline{cb} and it is stored in \lstinline{dout} and \lstinline{dout_valid} is asserted. If \lstinline{din_valid} is not asserted, \lstinline{dout_valid} is deasserted. The \lstinline{dout} signal shall not be considered when \lstinline{dout_valid} is deasserted, as per specification.
+\subsection{Other signals handling}
+When the 1-bit \lstinline{din_valid} signal is asserted, the 8-bit input signal \lstinline{din} must to be valid and stable. The \lstinline{din} signal value is XORed with the result of the lookup in the S-box of the counter block \lstinline{cb} and it is stored in \lstinline{dout}, and \lstinline{dout_valid} is asserted. If \lstinline{din_valid} is not asserted, \lstinline{dout_valid} is deasserted. The \lstinline{dout} signal shall not be considered when \lstinline{dout_valid} is deasserted, as per specification.
 
-Every clock cycle, if \lstinline{din_valid} is asserted (and \lstinline{key_in} is not), the counter block is increased by one modulo $256$. Notice that the modulo addition is implemented as a simple sum on an 8-bit reg, which implicitly overflows (without any warning or error generated from used tools). We decided to implement it this way because we found out that it performed better (about $5 MHz$ increase) with respect to other implementations.
+Every clock cycle, if \lstinline{din_valid} is asserted (and \lstinline{key_in} is not), the counter block is increased by one modulo $256$. Notice that the modulo addition is implemented as a simple sum on an 8-bit \lstinline{reg}, which implicitly overflows (without any warning or error generated from used tools). We decided to implement it this way because we found out that it performed better (about $5 MHz$ increase) with respect to other possible implementations.
 
 \clearpage
 \section{Block diagram}
@@ -63,7 +63,7 @@ The top-level view of our module is represented in \cref{fig:top_level}, with ev
 
 We are now going to describe the synthesized netlist in all of its parts. For the full picture, please refer to the next page.
 
-The update of the counter block \lstinline{cb} is implemented with a simple adder, where the result is used only when \lstinline{din_valid} is asserted. However, if \lstinline{key_in} is asserted, the update for the counter block register \lstinline{cb} is taken from the \lstinline{key}signal.
+The update of the counter block \lstinline{cb} is implemented with a simple adder, where the result is used only when \lstinline{din_valid} is asserted. However, if \lstinline{key_in} is asserted, the update for the counter block register \lstinline{cb} is taken from the \lstinline{key} signal instead.
 \begin{figure}[!ht]
     \centering
     \includegraphics[width=1\textwidth]{key_manage_netlist}
@@ -90,7 +90,7 @@ The S-box (\cref{fig:sbox_netlist}) is implement with 8 multiplexer in parallel 
     \label{fig:sbox_netlist}
 \end{figure}
 
-The encryption (\cref{fig:encryption_netlist}) is a simple XOR cascade where the inputs are the \lstinline{din} signal value and the output value of the S-box lookup.
+The encryption (\cref{fig:encryption_netlist}) is a simple XOR cascade where the two inputs are the \lstinline{din} signal and the output of the S-box lookup of the counter block \lstinline{cb}.
 \begin{figure}
     \centering
     \includegraphics[width=.5\textwidth]{encryption_netlist}
