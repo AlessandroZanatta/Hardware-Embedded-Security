@@ -1,8 +1,8 @@
-\section{Waveforms}
-We will now comment some of the observed waveforms of the simulation of our hardware module.
+\section{Waveforms} The observed waveforms of the simulation of the hardware module will be discussed in the this section.
 
-As reported in \cref{sec:usage}, the module shall be reset at startup. On reset, we can observe that the \lstinline{dout_valid} signal is set to zero.
-We wait for the posedge of the \lstinline{rst_n} signal to start the simulation, which starts by loading the key. We can also observe that each cycle an input is fed, and the corresponding output is available at the next clock cycle, as per specification.
+As reported in \cref{sec:usage}, the module shall be reset at startup. On reset, it can observed that the \lstinline{dout_valid} signal is set to zero. The simulation, which starts by loading the key, is started after the \lstinline{rst} signal's posedge.
+
+It can also be observed that each cycle an input is fed, and the corresponding output is available at the next clock cycle, as per specification.
 \begin{figure}[!ht]
     \centering
     \includegraphics[width=1\textwidth]{startup_waveform}
@@ -18,7 +18,7 @@ The following is the waveform for a key change. Note that in the cycle next to t
     \label{fig:key_change}
 \end{figure}
 
-Here we report the waveform of the \nth{2} test (see \cref{sec:tests}). We can observe that, independently from the number of clock cycles the module waits, signals follow the specification.
+The waveform of the \nth{2} test (see \cref{sec:tests}) has been reported here. It can be seen that, independently from the number of clock cycles the module waits, all signals follow the specification.
 \begin{figure}[!ht]
     \centering
     \includegraphics[width=1\textwidth]{random_waveform}
@@ -27,7 +27,7 @@ Here we report the waveform of the \nth{2} test (see \cref{sec:tests}). We can o
 \end{figure}
 
 \clearpage
-Finally, here we report the waveform of the \nth{3} test (see \cref{sec:tests}).
+Finally, the waveform of the \nth{3} test (see \cref{sec:tests}) has been reported below.
 \begin{figure}[!ht]
     \centering
     \includegraphics[width=1\textwidth]{file_encryption}

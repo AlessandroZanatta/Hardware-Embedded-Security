@@ -1,9 +1,9 @@
 \section{Testbench}
 \label{sec:tests}
-We will now describe the tests that were conducted on the designed hardware module.
+The tests that were conducted on the designed hardware module will be described in this section. In particular, 3 tests have been carried out:
 
 \begin{enumerate}
-    \item Given that the key space is small enough\footnote{Actually, the key space is definitely too small to provide any security.}, we are able to completely test the encryption (or, symmetrically, the decryption) of our module. Hence, a test performs the encryption of every possible character ($2^8$ possible characters) with every possible key ($2^8$ possible values).
-    \item We have repeated the first test, but adding a random number (0 to 5) of idle cycles between the encryption of two values. This test was carried out to check that the signals were properly handled by our module.
-    \item Finally, we have checked that the \cref{thm:enc_inv_dec} actually holds. To do so, we have encrypted a file ($\sim$39000 characters), and subsequently we have checked that its decryption (using the same key) was the same as the original file.
+    \item Given that the key space is small enough\footnote{Actually, the key space is definitely too small to provide any security.}, it is possible to completely test the encryption (or, symmetrically, the decryption) of the module. Hence, a test performs the encryption of every possible character ($2^8$ possible characters) with every possible key ($2^8$ possible values).
+    \item The previous test was repeated, but it was added a random number (0 to 5) of idle cycles between the encryption of two values. This test was carried out to check that the signals were properly handled by the module.
+    \item Finally, it has been checked that the \cref{thm:enc_inv_dec} actually holds. To do so, a file (of $\sim$39000 characters) has been encrypted, and subsequently it has been checked that its decryption (using the same key) was the same as the original file.
 \end{enumerate}

@@ -1,9 +1,9 @@
 \section{Specification analysis}
 
 \subsection{Algorithm description}
-We have implemented an AES S-box based stream cipher supporting both encryption and decryption. As this is a stream cipher, the encryption algorithm is based on a XOR operation of each plaintext character (represented as an 8-bit ASCII coded character) with an 8-bit value of the keystream, which is pseudo-randomly generated.
+In this project, an AES S-box based stream cipher supporting both encryption and decryption has been implemented. As this is a stream cipher, the encryption algorithm is based on a XOR operation of each plaintext character (represented as an 8-bit ASCII coded character) with an 8-bit value of the keystream, which is pseudo-randomly generated.
 
-In this project, we use as a PRBG for the keystream an 8-bit counter which is substituted with the S-box transformation of the AES algorithm. The 8-bit counter (called \textit{Counter Block}) is initialized with the symmetric key $K$. The encryption algorithm can be expressed as follows:
+The used pseudo-random generator is an 8-bit counter, which is substituted with the S-box transformation of the AES\footnote{Advanced Encryption Standard.} algorithm. The 8-bit counter (called \textit{Counter Block} or, in short, cb) is initialized with the symmetric key $K$. The encryption algorithm can be expressed as follows:
 \begin{equation}
     \label{eqn:enc}
     ct[i] = pt[i] \oplus S(cb[i])
